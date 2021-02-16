@@ -12,8 +12,9 @@ start.sh:
 ./flow scentmark:sniff $APP_VERSION
 RESULT=$?
 if [ $RESULT -ne 0 ]; then
-    ./flow flow:cache:flush
     ./flow scentmark:mark $APP_VERSION
+    ./flow flow:cache:flush 
+    ./flow resource:publish --collection static
 fi
 ```
 
