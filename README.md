@@ -27,11 +27,17 @@ Sitegeist_ScentMark_ScentCache:
 start.sh:   
 ```bash
 ./flow scentmark:sniff $APP_VERSION
-RESULT=$?
-if [ $RESULT -ne 0 ]; then
+
+// tasks to run on the first pod/container of a release
+if [ $? -ne 0 ]; then
+    // mark the cluster with the new release 
     ./flow scentmark:mark $APP_VERSION
-    ./flow flow:cache:flush 
-    ./flow resource:publish --collection static
+
+    // flush caches ... ensure they are configured with green / blue backends
+    ./flow flow:cache:flushone Neos_Fusion_Content
+    ./flow flow:cache:flushone Flow_Mvc_Routing_Route
+    ./flow flow:cache:flushone Flow_Mvc_Routing_Resolve
+    ./flow flow:cache:flushone Flowpack_FullPageCache_Entries
 fi
 ```
 
