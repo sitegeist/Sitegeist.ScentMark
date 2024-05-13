@@ -1,28 +1,22 @@
 # Sitegeist.ScentMark
 
 Mark and Sniff on Neos via CLI. This can help to optimize cache flushing in Cluster Environments with a green / blue 
-caching or publishing setup wehere certain tasks like cache flushing or publishing of static resources shall only be
-excuted on the first container of an newly deployed app version. 
+caching or publishing setup where certain tasks like cache flushing or publishing of static resources shall only be
+excuted on the first container of a newly deployed app version. 
 
 ## Usage
 
 The package contains two cli commands:
 
-- `./flow scentmark:mark __mark__` Store the given scent in the ScentCache 
+- `./flow scentmark:mark __mark__` Store the given scent
 
 - `./flow scentmark:sniff __mark__` Compare the cached scent with the stored value and return an error code if both do not match.
- 
+
+- `./flow scentmark:cleanup --keep 10` Remove old scents but keep the specified number of newest scents.
+
 ### Example  
 
-1. Configure ScentCache to be shared across containers.
-
-Caches.yaml
-```yaml
-Sitegeist_ScentMark_ScentCache:
-  backend: 'Neos\Cache\Backend\RedisBackend'
-```
-
-2. Adjust the container spinup script
+1. Adjust the container spinup script
 
 start.sh:   
 ```bash
@@ -41,12 +35,13 @@ if [ $? -ne 0 ]; then
 fi
 ```
 
-3. Configure flow to switch with every cache between Green / Blue caching environment
-4. Ensure the current APP_VERSION is available in the containers
+2. Configure flow to switch with every cache between Green / Blue caching environment
+3. Ensure the current APP_VERSION is available in the containers
 
 ### Authors & Sponsors
 
 * Martin Ficzel - ficzel@sitegeist.de
+* Melanie Wüst - wuest@sitegeist.de
 
 *The development and the public-releases of this package is generously sponsored
 by our employer http://www.sitegeist.de.*

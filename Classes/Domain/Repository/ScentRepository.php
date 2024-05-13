@@ -1,0 +1,35 @@
+<?php
+declare(strict_types=1);
+
+namespace Sitegeist\ScentMark\Domain\Repository;
+
+use Neos\Flow\Persistence\QueryInterface;
+use Neos\Flow\Persistence\Repository;
+use Neos\Flow\Annotations as Flow;
+use Sitegeist\ScentMark\Domain\Model\Scent;
+
+#[Flow\Scope('singleton')]
+class ScentRepository extends Repository
+{
+    /**
+     * @var array
+     */
+    protected $defaultOrderings = [
+        'dateTime' => QueryInterface::ORDER_DESCENDING
+    ];
+
+    public function removeByAge(int $keep): int
+    {
+        $outdatedScentsQuery = $this->findAll();
+        $countRemoved = 0;
+        $number = 0;
+        foreach ($outdatedScentsQuery as $scent) {
+            $number ++;
+            if ($number > $keep) {
+                $this->remove($scent);
+                $countRemoved++;
+            }
+        }
+        return $countRemoved;
+    }
+}

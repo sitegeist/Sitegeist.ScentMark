@@ -5,42 +5,43 @@ namespace Sitegeist\ScentMark\Command;
 
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Cli\CommandController;
-use Neos\Cache\Frontend\StringFrontend;
+use Sitegeist\ScentMark\Domain\Model\Scent;
+use Sitegeist\ScentMark\Domain\Repository\ScentRepository;
 
 class ScentMarkCommandController extends CommandController
 {
-    /**
-     * @var StringFrontend
-     * @Flow\Inject
-     */
-    protected $scentMarkCache;
+    #[Flow\Inject]
+    protected ScentRepository $scentRepository;
 
-    /**
-     * @param string $scent
-     * @return string
-     * @throws \Neos\Cache\Exception
-     * @throws \Neos\Cache\Exception\InvalidDataException
-     */
-    public function markCommand(string $scent)
+    public function markCommand(string $scent): void
     {
-        $this->scentMarkCache->set('default', $scent);
-        $this->outputLine(sprintf('Marked tree with "%s"', $scent));
+        $scentEntity = $this->scentRepository->findOneByValue($scent);
+        if ($scentEntity instanceof Scent) {
+            $this->outputLine(sprintf('Scent on tree did already contain "%s"', $scent));
+            $this->quit(1);
+        } else {
+            $scentEntity = new Scent();
+            $scentEntity->setValue($scent);
+            $this->scentRepository->add($scentEntity);
+            $this->outputLine(sprintf('Marked tree with "%s"', $scent));
+        }
     }
 
-    /**
-     * @param string $scent
-     * @return string
-     * @throws \Neos\Flow\Cli\Exception\StopCommandException
-     */
-    public function sniffCommand(string $scent)
+    public function sniffCommand(string $scent): void
     {
-        $scentOnBark = $this->scentMarkCache->get('default', $scent);
-        if ($scentOnBark && $scentOnBark == $scent) {
-            $this->outputLine(sprintf( 'Scent on tree matched "%s"', $scent));
+        $scentEntity = $this->scentRepository->findOneByValue($scent);
+        if ($scentEntity instanceof Scent) {
+            $this->outputLine(sprintf( 'Scent on tree contains scent "%s" since "%s"', $scent, $scentEntity->getDateTime()?->format('y-m-d H:i:s')));
             $this->quit();
         } else {
-            $this->outputLine(sprintf('Scent on tree "%s" did not match "%s"', $scentOnBark, $scent));
+            $this->outputLine(sprintf('Scent on tree did not contain "%s"', $scent));
             $this->quit(1);
         }
+    }
+
+    public function cleanupCommand(int $keep): void
+    {
+        $removed = $this->scentRepository->removeByAge($keep);
+        $this->outputLine(sprintf( '%d scents were removed', $removed));
     }
 }
