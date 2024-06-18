@@ -6,10 +6,10 @@ namespace Sitegeist\ScentMark\Domain\Repository;
 use Neos\Flow\Persistence\QueryInterface;
 use Neos\Flow\Persistence\Repository;
 use Neos\Flow\Annotations as Flow;
-use Sitegeist\ScentMark\Domain\Model\Scent;
+use Sitegeist\ScentMark\Domain\Model\Pack;
 
 #[Flow\Scope('singleton')]
-class ScentRepository extends Repository
+class PackRepository extends Repository
 {
     /**
      * @var array

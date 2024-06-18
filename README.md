@@ -1,42 +1,101 @@
 # Sitegeist.ScentMark
 
-Mark and Sniff on Neos via CLI. This can help to optimize cache flushing in Cluster Environments with a green / blue 
-caching or publishing setup where certain tasks like cache flushing or publishing of static resources shall only be
-excuted on the first container of a newly deployed app version. 
+Mark and Bark on Neos via CLI. This can help to orchestrate tasks in Cluster Environments where certain tasks like cache flushing or publishing of static resources shall only be
+executed on the first container of a newly deployed app version or on only one of many containers.
+
+NOTE: This goes well together with the sitegeist/treasuremap package that implements green/blue caching but can be used for other purposes as well.
 
 ## Usage
 
-The package contains two cli commands:
+The package contains three cli commands:
 
-- `./flow scentmark:mark __mark__` Store the given scent
+### `./flow  scentmark:mark`
 
-- `./flow scentmark:sniff __mark__` Compare the cached scent with the stored value and return an error code if both do not match.
+```
+Mark the current deployment with the pack scent.
 
-- `./flow scentmark:cleanup --keep 10` Remove old scents but keep the specified number of newest scents.
+COMMAND:
+  sitegeist.scentmark:scentmark:mark
 
-### Example  
+USAGE:
+  ./flow scentmark:mark <pack scent>
 
-1. Adjust the container spinup script
+ARGUMENTS:
+  --pack-scent         
 
-start.sh:   
-```bash
-./flow scentmark:sniff $APP_VERSION
-
-// tasks to run on the first pod/container of a release
-if [ $? -ne 0 ]; then
-    // mark the cluster with the new release 
-    ./flow scentmark:mark $APP_VERSION
-
-    // flush caches ... ensure they are configured with green / blue backends
-    ./flow flow:cache:flushone Neos_Fusion_Content
-    ./flow flow:cache:flushone Flow_Mvc_Routing_Route
-    ./flow flow:cache:flushone Flow_Mvc_Routing_Resolve
-    ./flow flow:cache:flushone Flowpack_FullPageCache_Entries
-fi
+DESCRIPTION:
+  Returns status code 0 if the pack was new and successfully marked
+  Returns status code 1 if the pack was already known beforehand
 ```
 
-2. Configure flow to switch with every cache between Green / Blue caching environment
-3. Ensure the current APP_VERSION is available in the containers
+### `./flow  scentmark:bark`
+
+```
+Select pack leader by passing packScent and leaderScent. If no leader is currently elected the first one asking
+
+COMMAND:
+  sitegeist.scentmark:scentmark:bark
+
+USAGE:
+  ./flow scentmark:bark <pack scent> <leader scent>
+
+ARGUMENTS:
+  --pack-scent         
+  --leader-scent       
+
+DESCRIPTION:
+  for the role is granted leader status for one hour
+  
+  Returns status code 0 if the $packScent and $leaderScent match and the current pod is considered leader for a time
+  Returns status code 1 if the current pod is not the leader for now
+
+```
+
+### `./flow  scentmark:cleanup`
+
+```
+Remove the oldest packs but keep a specified number of items
+
+COMMAND:
+  sitegeist.scentmark:scentmark:cleanup
+
+USAGE:
+  ./flow scentmark:cleanup <keep>
+
+ARGUMENTS:
+  --keep        
+```
+
+## Examples
+
+### Run jobs on the first container of a new release
+
+start.sh:
+
+```bash
+
+// check wether a release (pack) with the given scent is already known
+./flow scentmark:mark $APP_VERSION
+
+// tasks to run on the first pod/container of a release (pack)
+if [ $? -eq 0 ]; then
+    // flush caches ... ensure they are configured with green / blue backends
+fi
+```
+### Run jobs on only one container (pack leader) of a release
+
+cron.sh:
+
+```bash
+
+// check wether the current pod is pack leader or can be promoted to lead status
+./flow scentmark:bark $APP_VERSION $POD_ID
+
+// tasks to run on eacatly one container only
+if [ $? -eq 0 ]; then
+    // flush caches ... ensure they are configured with green / blue backends
+fi
+```
 
 ### Authors & Sponsors
 
